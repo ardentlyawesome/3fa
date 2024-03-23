@@ -3,6 +3,9 @@ import ssl
 import secrets
 from email.mime.text import MIMEText
 import re
+import time
+import random
+import string
 
 # Function to send OTP email
 def send_otp_email(receiver_email, otp):
@@ -21,13 +24,23 @@ def send_otp_email(receiver_email, otp):
         server.login(sender_email, password)
         server.sendmail(sender_email, receiver_email, msg.as_string())
 
-# Function to generate OTP
-def generate_otp():
-    return str(secrets.randbelow(1000000)).zfill(6)
+otp_storage = {}
 
-# Function to verify OTP
+# Function to generate a random OTP
+def generate_otp():
+    otp = ''.join(random.choices(string.digits, k=6))  # Generate a 6-digit OTP
+    timestamp = time.time() 
+    otp_storage[otp] = timestamp  # Store the OTP along with its creation time
+    return otp
+
+# Function to verify the OTP within a specified time limit
 def verify_otp(input_otp, generated_otp):
-    return input_otp == generated_otp
+    if input_otp in otp_storage:
+        otp_timestamp = otp_storage[input_otp]
+        if time.time() - otp_timestamp <= 300: 
+            del otp_storage[input_otp]  # Remove the OTP from storage
+            return True
+    return False
 
 # Function to validate email format
 def validate_email(email):
