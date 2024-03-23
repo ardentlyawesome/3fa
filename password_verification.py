@@ -1,6 +1,6 @@
 user_password_mapping = {
+        "Samyukta": "password0",
         "Aryan": "password1",
-        "Samyukta": "password2",
         "Shivangi": "password3",
         "Vinithra": "password4",
         # Add more users as needed

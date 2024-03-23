@@ -8,8 +8,8 @@ import threading
 
 # User-label mapping
 user_mapping = {
-    "Aryan":"user",
     "Samyukta": "user0",
+    "Aryan":"user1",
     "Shivangi": "user2",
     "Vinithra": "user3",
     # Add more users as needed
@@ -24,9 +24,11 @@ def authenticate_user_password():
         password = input("Enter your password: ")
         if verify_password(username, password):
             print("Password Verified.")
+            print()
             return True
         else:
             print("Invalid username or password. Please try again.")
+            print()
             attempts -= 1
     return False
 
