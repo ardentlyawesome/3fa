@@ -5,9 +5,23 @@ user_password_mapping = {
         "Vinithra": "password4",
         # Add more users as needed
     }
+
+def verify_username(username):
+    # Verify if the entered username is in the mapping
+    if username in user_password_mapping:
+        return True
+    else:
+        print("User Not Registered.")
+        print("Please Try Again.")
+        print()
+        return False
+    
 def verify_password(username, password):
     # Verify password for the given username
-    if username in user_password_mapping:
-        if user_password_mapping[username] == password:
-            return True
-    return False
+    if user_password_mapping.get(username) == password:
+        return True
+    else:
+        print("Incorrect Password.")
+        print("Please Try Again.")
+        print()
+        return False

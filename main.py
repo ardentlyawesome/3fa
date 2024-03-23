@@ -2,7 +2,7 @@ import argparse
 from encryption import Encryptor
 from recognize import Recognizer
 from otp_verification import send_otp_email, generate_otp, verify_otp, validate_email
-from password_verification import verify_password
+from password_verification import verify_password, verify_username
 import time
 import threading
 
@@ -15,65 +15,87 @@ user_mapping = {
     # Add more users as needed
 }
 
+# User-email mapping
+user_email_mapping = {
+    "Samyukta": "samyukta.pathak2021@vitstudent.ac.in",
+    "Aryan": "aryan@example.com",
+    "Shivangi": "shivangi@example.com",
+    "Vinithra": "vinithra@example.com",
+    # Add more users as needed
+}
+
 
 # Function to authenticate user based on password
 def authenticate_user_password():
+    global username
     attempts = 3
     while attempts > 0:
-        username = input("Enter your username: ")
-        password = input("Enter your password: ")
-        if verify_password(username, password):
-            print("Password Verified.")
-            print()
-            return True
-        else:
-            print("Invalid username or password. Please try again.")
-            print()
-            attempts -= 1
-    return False
+        username = input("Enter Your Username: ")
+        if verify_username(username):
+            password_attempts = 3
+            while password_attempts > 0:
+                password = input("Enter Your Password: ")
+                if verify_password(username, password):
+                    print("Password Verified.")
+                    print()
+                    return username  # Return the username upon successful authentication
+                password_attempts -= 1
+            print("Too Many Incorrect Attempts.")
+            print("Please try again later.")
+            return None
+        attempts -= 1
+    print("Authentication Failed. Too Many Attempts.")
+    return None
 
-
-def update_time_left(start_time, event):
+def update_time_left(start_time, event, time_limit):
     while not event.is_set():
-        time_left = int(300 - (time.time() - start_time))  # Calculate time left
-        if time_left <= 0:
+        time_passed = time.time() - start_time
+        time_left = max(0, time_limit - time_passed)  # Calculate time left
+        if time_left == 0:
             break
-        print(f"\rTime left: {time_left} seconds", end='', flush=True)
+        print(f"\rTime Left: {time_left} seconds", end='', flush=True)
         time.sleep(1)
 
-def authenticate_user_otp():
+def authenticate_user_otp(username):
     attempts = 3
+    receiver_email = user_email_mapping.get(username)
+    if not validate_email(receiver_email):
+        print("Your Registered Email is Invalid.")
+        print("Contact Admin to Update.")
+        exit()
+
+    generated_otp = generate_otp()
+    send_otp_email(receiver_email, generated_otp)
+    print("OTP has been sent to your Registered Email.")
+
+    start_time = time.time()
+    time_limit = 300  # Time limit for OTP verification
+
     while attempts > 0:
-        receiver_email = input("Enter your email address: ")
-        if not validate_email(receiver_email):
-            print("Invalid email format. Please enter a valid email address.")
-            continue
-        
-        generated_otp = generate_otp()
-        send_otp_email(receiver_email, generated_otp)
-        
-        start_time = time.time()
-        
         timer_event = threading.Event()
-        time_thread = threading.Thread(target=update_time_left, args=(start_time, timer_event))
+        time_thread = threading.Thread(target=update_time_left, args=(start_time, timer_event, time_limit))
         time_thread.start()
         print("\n")
         timer_event.set()
-        
+
         input_otp = input("Enter the OTP received: ")
-    
-        time_thread.join() 
-        
-        if verify_otp(input_otp, generated_otp):  # Pass the generated OTP here
+
+        time_thread.join()
+
+        if verify_otp(input_otp, generated_otp):
             print("\nOTP Verified.")
-            print("Look at the Camera")
+            print()
+            print("Please Look at the Camera.")
             return True
         else:
-            print("\nInvalid OTP. Please try again.")
-        
+            print("\nInvalid OTP.")
+            print("Please Try Again.")
+            print()
         attempts -= 1
-    print("OTP verification failed.")
+
+    print("OTP Verification Failed.")
     return False
+
 
 
 # Function to authenticate user based on detected faces
@@ -108,13 +130,13 @@ def main():
         exit()
 
     elif mode == "decrypt":
-        
+                                  
         # Authenticate user using password
         if not authenticate_user_password():
             exit()
             
         # Authenticate user using otp
-        if not authenticate_user_otp():
+        if not authenticate_user_otp(username):
             exit()
 
         # Authenticate user using face detection
@@ -122,6 +144,7 @@ def main():
         if authenticated_user:
             try:
                 enc.decrypt_file(file_path)
+                print()
                 print("File Decrypted.")
                 print(f"User Authenticated: {authenticated_user}")
             except Exception as e:
