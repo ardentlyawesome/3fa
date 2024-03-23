@@ -24,7 +24,6 @@ user_email_mapping = {
     # Add more users as needed
 }
 
-
 # Function to authenticate user based on password
 def authenticate_user_password():
     global username
@@ -95,8 +94,6 @@ def authenticate_user_otp(username):
 
     print("OTP Verification Failed.")
     return False
-
-
 
 # Function to authenticate user based on detected faces
 def authenticate_user_face():
